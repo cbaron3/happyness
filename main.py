@@ -105,7 +105,7 @@ if __name__ == "__main__":
     # Every friday at 6 PM, near the end of dinner, relay donut stock
     # 6PM EST is 23:00 UTC
     schedule.every().friday.at("23:00").do(
-        stock_notifer, msg_handler, scraper, RECEPIENTS[0], True)
+        stock_notifer, msg_handler, scraper, RECEPIENTS, True)
 
     # Every saturday at 9:05 AM, right after open, relay donut stock
     # 9:05 AM EST is 2:05 PM UTC (For now, dst screws this up but im lazy for now)
