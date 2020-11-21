@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 from twilio.rest import Client
 from bs4 import BeautifulSoup
 
+
 class MessageHandler:
     def __init__(self, token, sid, number):
         self.client = Client(sid, token)
@@ -30,7 +31,7 @@ class HappinessScraper:
     def __init__(self):
         self.url = 'https://www.ubereats.com/ca/london-ont/food-delivery/happiness/QOwmsPH2TNmfejpREzKCFw'
 
-    def run(self):
+    def run(self, ignore_stock=False):
         # Retrieve contents from page
         response = requests.get(self.url)
 
@@ -41,10 +42,13 @@ class HappinessScraper:
         donuts = []
 
         for result in results:
+            # Only consider h4 tags that include the word donut except the donut boxes
             if "donut" in result.string.lower() and "box" not in result.string.lower():
-                notInStock = result.parent.findAll(text='Sold out')
+                # Check if donut is sold out
+                sold_out = result.parent.findAll(text='Sold out')
 
-                if not notInStock:
+                # Consider donuts that are in stock UNLESS the scraper is configured to ignore_stock
+                if not sold_out or ignore_stock:
                     donuts.append(result.string[:len(result.string)-1])
 
         return ', '.join(donuts)
@@ -52,16 +56,19 @@ class HappinessScraper:
 
 def notify_admin(msg_handler, admin):
     # Notify only the admin that the service is working
-    msg_handler.send("Service is active", [admin])
+    msg_handler.send(
+        "Happyness donut bot is active! You will receive happiness donut stock information on Fridays at 6:00 PM and Saturdays at 9:05 AM", [admin])
 
 
-def stock_notifer(msg_handler, scraper, recepients):
-    # Scraper page
-    instock = scraper.run()
+def stock_notifer(msg_handler, scraper, recepients, ignore_stock=False):
+    print("Stock notifier")
+
+    # Scrape page
+    donuts = scraper.run(ignore_stock)
 
     # If there exist donuts in stock, send them to recepients via text
-    if instock:
-        msg = "Happiness donuts: {}".format(instock)
+    if donuts:
+        msg = "Happiness donuts: {}".format(donuts)
         msg_handler.send(msg, recepients)
     else:
         print("No donuts in stock")
@@ -91,16 +98,18 @@ if __name__ == "__main__":
     # Heart beat
     schedule.every(30).seconds.do(activity_logger)
 
+    # Test function, grab all donuts regardless of stock
+    schedule.every(45).seconds.do(stock_notifer, msg_handler,
+                                  scraper, [RECEPIENTS[0]], True)
+
     # Every friday at 6 PM, near the end of dinner, relay donut stock
-    schedule.every().friday.at("18:00").do(
-        stock_notifer, msg_handler, scraper, RECEPIENTS[0])
+    # 6PM EST is 23:00 UTC
+    schedule.every().friday.at("23:00").do(
+        stock_notifer, msg_handler, scraper, RECEPIENTS[0], True)
 
-    # # Every friday at 8 PM, near the end of dinner, relay donut stock
-    schedule.every().friday.at("20:00").do(
-        stock_notifer, msg_handler, scraper, RECEPIENTS)
-
-    # # Every saturday at 8 AM, before donuts are bought, relay donut stock
-    schedule.every().saturday.at("08:00").do(
+    # Every saturday at 9:05 AM, right after open, relay donut stock
+    # 9:05 AM EST is 2:05 PM UTC (For now, dst screws this up but im lazy for now)
+    schedule.every().saturday.at("14:05").do(
         stock_notifer, msg_handler, scraper, RECEPIENTS)
 
     print("Scheduler configured...")
