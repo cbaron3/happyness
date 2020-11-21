@@ -93,14 +93,14 @@ if __name__ == "__main__":
 
     # Start service by sending text to my phone
     print("Happiness Notifier started...")
-    notify_admin(msg_handler, RECEPIENTS[0])
+    notify_admin(msg_handler, RECEPIENTS)
 
     # Heart beat
     schedule.every(30).seconds.do(activity_logger)
 
-    # Test function, grab all donuts regardless of stock
-    schedule.every(45).seconds.do(stock_notifer, msg_handler,
-                                  scraper, [RECEPIENTS[0]], True)
+    # # Test function, grab all donuts regardless of stock
+    # schedule.every(45).seconds.do(stock_notifer, msg_handler,
+    #                               scraper, [RECEPIENTS[0]], True)
 
     # Every friday at 6 PM, near the end of dinner, relay donut stock
     # 6PM EST is 23:00 UTC
