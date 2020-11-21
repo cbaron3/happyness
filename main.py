@@ -57,7 +57,7 @@ class HappinessScraper:
 def notify_admin(msg_handler, admin):
     # Notify only the admin that the service is working
     msg_handler.send(
-        "Happyness donut bot is active! You will receive happiness donut stock information on Fridays at 6:00 PM and Saturdays at 9:05 AM", [admin])
+        "Happyness donut bot is active! You will receive happiness donut stock information on Fridays at 6:00 PM and Saturdays at 9:05 AM", admin)
 
 
 def stock_notifer(msg_handler, scraper, recepients, ignore_stock=False):
